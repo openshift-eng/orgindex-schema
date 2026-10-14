@@ -1,0 +1,51 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "orgindex-schema"
+version = "0.1.0"
+description = "Canonical, versioned pydantic schema for the organizational data comprehensive index (the on-disk contract between the cyborg producer and cyborg-data consumers)."
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+requires-python = ">=3.11"
+authors = [{ name = "Continuous Release Tooling - Red Hat" }]
+keywords = ["organizational-data", "index", "schema", "contract"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Typing :: Typed",
+]
+
+dependencies = ["pydantic>=2.7"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0,<9", "mypy>=1.13,<2.0", "ruff>=0.6,<0.9"]
+
+[project.urls]
+Repository = "https://github.com/openshift-eng/orgindex-schema"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/orgindex_schema"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --strict-markers --strict-config"
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+packages = ["orgindex_schema"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "C4", "SIM", "UP", "RUF", "N", "PGH"]

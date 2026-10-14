@@ -1,0 +1,143 @@
+{
+  "indexes": {
+    "component_ownership": {
+      "COO": [
+        { "name": "Observability", "type": "team", "ownership_types": ["owner"] }
+      ]
+    },
+    "github_id_mappings": { "github_id_to_uid": { "alice-gh": "alice" } },
+    "jira": {
+      "AP": {
+        "Console": [{ "name": "Application Platform", "type": "team" }],
+        "_project_level": [{ "name": "Application Platform", "type": "team" }]
+      }
+    },
+    "membership": {
+      "membership_index": {
+        "alice": [
+          { "name": "Application Platform", "type": "team", "stable_id": "sid-ap-team" },
+          { "name": "Initiative X", "type": "cohort" }
+        ],
+        "bob": [
+          { "name": "Application Platform", "type": "team", "stable_id": "sid-ap-team" },
+          { "name": "Rootless Team", "type": "team" }
+        ]
+      }
+    },
+    "slack_id_mappings": { "slack_uid_to_uid": { "U_ALICE": "alice" } }
+  },
+  "lookups": {
+    "cohorts": {
+      "Initiative X": {
+        "name": "Initiative X",
+        "description": "",
+        "group": { "type": { "name": "cohort", "visualize": true }, "resolved_people_uid_list": ["alice"] }
+      }
+    },
+    "components": {
+      "COO": {
+        "name": "COO",
+        "description": "Cluster Observability Operator",
+        "parent": { "name": "Observability", "type": "team" },
+        "repos_list": ["https://github.com/rhobs/observability-operator/"],
+        "component": {
+          "type": { "name": "system", "visualize": true, "visualize_group": ["ocp", "rosa"] },
+          "repos": [{ "repo_name": "https://github.com/rhobs/observability-operator/", "description": "COO" }],
+          "jiras": [{ "project": "OBSDA", "component": "COO", "description": "", "types": ["main"] }],
+          "resources": [{ "name": "Docs", "url": "https://example.com/coo", "description": "COO docs" }],
+          "related_components": [{ "component_path": "/org/config/software/system/openshift/components/olm.yaml", "types": ["bugs"] }],
+          "parent": "/org/config/software/system/openshift/components/observability.yaml"
+        }
+      }
+    },
+    "employees": {
+      "alice": {
+        "uid": "alice",
+        "full_name": "Alice Example",
+        "email": "alice@example.com",
+        "job_title": "Principal Software Engineer",
+        "github_id": "alice-gh",
+        "possible_github_ids": ["alice-gh", "alice-alt"],
+        "manager_uid": "carol",
+        "slack_uid": "U_ALICE",
+        "timezone": "Europe/Berlin"
+      },
+      "bob": {
+        "uid": "bob",
+        "full_name": "Bob Example",
+        "email": "bob@example.com",
+        "job_title": "Quality Engineer",
+        "github_id": null,
+        "manager_uid": "carol",
+        "slack_uid": null,
+        "timezone": "America/New_York"
+      }
+    },
+    "orgs": {
+      "Platform Org": {
+        "name": "Platform Org",
+        "description": "",
+        "parent": { "name": "Root", "type": "org" },
+        "group": { "type": { "name": "org", "visualize": true } }
+      }
+    },
+    "pillars": {
+      "Core": {
+        "name": "Core",
+        "description": "",
+        "group": { "type": { "name": "pillar", "visualize": true } }
+      }
+    },
+    "team_groups": {
+      "Application Platform": {
+        "name": "Application Platform",
+        "description": "Team group that collides by name with the team",
+        "parent": { "name": "Core", "type": "pillar" },
+        "group": { "type": { "name": "team_group", "visualize": true }, "keywords": null }
+      }
+    },
+    "teams": {
+      "Application Platform": {
+        "name": "Application Platform",
+        "description": "AP team",
+        "parent": { "name": "Platform", "type": "team_group" },
+        "parent_id": "sid-platform-tg",
+        "stable_id": "sid-ap-team",
+        "group": {
+          "type": { "name": "team", "visualize": true, "visualize_group": ["ocp"] },
+          "resolved_people_uid_list": ["alice", "bob"],
+          "resolved_roles": [{ "people": ["alice"], "roles": ["lead"] }],
+          "slack": {
+            "channels": [{ "channel": "forum-ap", "channel_id": "C1", "description": "AP forum", "types": ["forum"] }],
+            "aliases": [{ "alias": "@ap", "description": "AP alias" }]
+          },
+          "jiras": [{ "project": "AP", "types": ["main"] }],
+          "repos": [{ "repo_name": "https://github.com/example/ap", "description": "AP repo", "branch": "main", "path": "/", "roles": ["admin"], "tags": ["core"], "types": ["code"] }],
+          "keywords": ["platform", "ocp"],
+          "emails": [{ "address": "ap@example.com", "name": "AP", "description": "AP list" }],
+          "resources": [{ "name": "Runbook", "url": "https://example.com/rb", "description": "AP runbook" }],
+          "escalation": [{ "name": "On-call", "url": "https://example.com/esc", "description": "AP escalation" }],
+          "component_roles": ["COO"],
+          "context": [{ "types": ["team_overview"], "name": "AP Overview", "description": "overview", "url": "https://example.com/ov", "owner": "alice", "inheritance": "additive" }],
+          "resolved_context": [{ "types": ["team_overview"], "name": "AP Overview", "description": "overview", "url": "https://example.com/ov", "owner": "alice", "inheritance": "additive", "source_entity": "Application Platform", "source_type": "team" }]
+        }
+      },
+      "Rootless Team": {
+        "name": "Rootless Team",
+        "description": "",
+        "group": { "type": { "name": "team", "visualize": true }, "resolved_people_uid_list": ["bob"] }
+      }
+    }
+  },
+  "metadata": {
+    "schema_version": "1.0.0",
+    "builders": ["ComponentIndexBuilder", "ComponentOwnershipIndexBuilder", "EmployeeIndexBuilder", "JiraIndexBuilder", "MembershipIndexBuilder", "OrgIndexBuilder"],
+    "context_type_descriptions": { "team_overview": "Overview of a team." },
+    "data_version": "abc123def456",
+    "generated_at": "2026-10-13T12:00:00+00:00",
+    "pii_free": false,
+    "supported_queries": ["Get team members", "Is employee in team/org?"],
+    "total_employees": 2,
+    "total_orgs": 1
+  }
+}
