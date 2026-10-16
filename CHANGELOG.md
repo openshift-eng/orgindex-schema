@@ -21,6 +21,10 @@ contract note the `SCHEMA_VERSION` transition and, for a major, link a migration
   exposed on the package.
 - CI across Python 3.11–3.13; `CONTRIBUTING.md`, `RELEASING.md`, and this
   changelog.
+- Supply-chain hardening: `zizmor` workflow-security scan in CI; least-privilege
+  workflow tokens (`permissions: {}` default-deny, `persist-credentials: false`);
+  an informational `griffe check` of the Python import surface (becomes a required
+  gate at 1.0.0).
 
 ### Changed
 - Documented the **support window / deprecation policy** and the package-major ↔

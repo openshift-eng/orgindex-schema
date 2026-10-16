@@ -5,8 +5,8 @@ on:
   push:
     branches: [main, "release-*"]
 
-permissions:
-  contents: read
+# Deny by default; each job elevates to only what it needs.
+permissions: {}
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -16,6 +16,8 @@ jobs:
   checks:
     name: checks (py${{ matrix.python-version }})
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -27,6 +29,7 @@ jobs:
         with:
           # hatch-vcs derives the version from tags; a full history is required.
           fetch-depth: 0
+          persist-credentials: false
       - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
           python-version: ${{ matrix.python-version }}
@@ -40,13 +43,52 @@ jobs:
     # by resolving each direct dependency to its lowest allowed version.
     name: minimum versions
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     env:
       UV_PYTHON: "3.11"
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0
+          persist-credentials: false
       - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
           python-version: "3.11"
       - run: uv run --resolution lowest-direct --extra dev pytest
+
+  zizmor:
+    # Static security analysis of these GitHub Actions workflows (unpinned actions,
+    # excessive token permissions, credential persistence, template injection, ...).
+    name: zizmor
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+      - run: uvx zizmor@1.31.1 .github/workflows/
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+  api-diff:
+    # Report breaking changes to the Python import surface (exported models,
+    # signatures) against the last release tag, complementing the JSON-Schema gate.
+    # Informational while the package is 0.x; make this a required gate at 1.0.0.
+    name: api-diff (informational)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+      # Compares the working tree's public API against the latest git tag.
+      # Surfaces breakages as annotations without failing the build (0.x); drop
+      # continue-on-error to make this a required gate at 1.0.0.
+      - run: uvx griffe@2.3.2 check -s src -f github orgindex_schema
+        continue-on-error: true
