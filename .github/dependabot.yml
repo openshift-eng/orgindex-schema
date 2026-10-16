@@ -16,7 +16,10 @@ updates:
     cooldown:
       default-days: 7
 
-  # Watch the runtime/dev dependency bounds (notably the pydantic floor).
+  # Watch the runtime dependency (pydantic). Dev tooling is deliberately not
+  # tracked: those updates only widen the dev upper bounds in pyproject without
+  # refreshing uv.lock, which breaks `uv lock --check`; we bump them by hand
+  # (cap + lock together) when adopting newer linting. See CONTRIBUTING.md.
   - package-ecosystem: pip
     directory: "/"
     schedule:
@@ -28,3 +31,7 @@ updates:
         patterns: ["*"]
     cooldown:
       default-days: 7
+    ignore:
+      - dependency-name: "ruff"
+      - dependency-name: "mypy"
+      - dependency-name: "pytest"

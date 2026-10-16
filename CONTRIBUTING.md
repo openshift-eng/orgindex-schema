@@ -36,6 +36,10 @@ rollout order first.
   (CI runs `uv lock --check`).
 - Runtime deps must stay minimal (pydantic only) — this package is depended on by
   both the producer and every consumer, so keep its footprint tiny.
+- **Dev tooling (ruff/mypy/pytest) is bumped by hand**, not by Dependabot (it only
+  tracks `pydantic` + GitHub Actions). To adopt a newer version, widen the bound in
+  `pyproject.toml` *and* run `uv lock` in the same change, then fix any new
+  lint/type findings — keeping the cap and the lock in sync.
 
 ## Ground rules
 
