@@ -21,14 +21,17 @@ Query-result types that are computed at query time and never serialized
 ## Installation
 
 ```bash
-pip install "orgindex-schema>=1,<2"
+pip install "orgindex-schema>=0.1,<0.2"
 ```
 
-Pin to a **major range**, not an exact version. The package major is coupled to the
-contract `SCHEMA_VERSION` major (see [COMPATIBILITY.md](COMPATIBILITY.md)), so
-`>=1,<2` lets the resolver — not just the runtime check — refuse an incompatible
-contract. Hash-pin in your lockfile and resolve from a single index to avoid
-dependency-confusion substitution.
+The package is in **initial development (0.x)** — the contract is still settling as
+the first consumer is built, so each `0.x` **minor** may break. Pin to a single
+minor (`>=0.1,<0.2`); when the shape is proven in a real consumer the project will
+cut `1.0.0`, after which you pin to a major range (`>=1,<2`). The package major is
+coupled to the contract `SCHEMA_VERSION` major (see
+[COMPATIBILITY.md](COMPATIBILITY.md)), so the pin is a resolver-enforced
+compatibility check, not just a convention. Hash-pin in your lockfile and resolve
+from a single index to avoid dependency-confusion substitution.
 
 ## Usage
 

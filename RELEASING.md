@@ -9,6 +9,14 @@ The package version comes from the git tag (`hatch-vcs`). Its **major must equal
 `SCHEMA_VERSION`'s major** — the release workflow enforces this. See
 [COMPATIBILITY.md](COMPATIBILITY.md) for the full policy.
 
+> **Current status: initial development (`0.x`).** The contract is still settling,
+> so bumps shift down one place: a **breaking** change bumps the **minor**
+> (`0.1 → 0.2`) and an **additive** change bumps the **patch** (`0.1.0 → 0.1.1`).
+> There is no cross-major ceremony yet. Cut **`1.0.0`** to declare stability once a
+> real consumer has validated the shape; the rules below then apply.
+
+Once stable (`>= 1.0.0`):
+
 - Contract unchanged, packaging/docs only → bump package patch/minor (e.g. `1.0.0 → 1.0.1`).
 - Additive contract change → bump `SCHEMA_VERSION` minor **and** the package minor.
 - Breaking contract change → bump **both majors** and follow the major checklist below.

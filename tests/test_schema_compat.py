@@ -142,3 +142,38 @@ def test_check_rejects_malformed_version(tmp_path: Path, bad: str) -> None:
     base = write_baseline(tmp_path, "1.0.0", defs)
     with pytest.raises(ValueError):
         check(base, make_schema(bad, defs))
+
+
+# ---- 0.x initial-development semantics: breaking -> MINOR, additive -> PATCH ----
+
+
+def test_check_0x_breaking_requires_minor(tmp_path: Path) -> None:
+    base = write_baseline(tmp_path, "0.1.0", {"Foo": model({"a": {"type": "string"}})})
+    # A breaking change with only a PATCH bump is not enough in 0.x.
+    current = make_schema("0.1.1", {"Foo": model({"a": {"type": "integer"}})})
+    assert check(base, current) == 1
+
+
+def test_check_0x_breaking_passes_on_minor(tmp_path: Path) -> None:
+    base = write_baseline(tmp_path, "0.1.0", {"Foo": model({"a": {"type": "string"}})})
+    current = make_schema("0.2.0", {"Foo": model({"a": {"type": "integer"}})})
+    assert check(base, current) == 0
+
+
+def test_check_0x_additive_passes_on_patch(tmp_path: Path) -> None:
+    base = write_baseline(tmp_path, "0.1.0", {"Foo": model({"a": {"type": "string"}})})
+    current = make_schema("0.1.1", {"Foo": model({"a": {"type": "string"}, "b": {"type": "string"}})})
+    assert check(base, current) == 0
+
+
+def test_check_0x_additive_requires_a_bump(tmp_path: Path) -> None:
+    base = write_baseline(tmp_path, "0.1.0", {"Foo": model({"a": {"type": "string"}})})
+    current = make_schema("0.1.0", {"Foo": model({"a": {"type": "string"}, "b": {"type": "string"}})})
+    assert check(base, current) == 1
+
+
+def test_check_promotion_to_1_0_0_is_allowed(tmp_path: Path) -> None:
+    # Declaring stability (0.x -> 1.0.0) is allowed even alongside a breaking change.
+    base = write_baseline(tmp_path, "0.5.0", {"Foo": model({"a": {"type": "string"}})})
+    current = make_schema("1.0.0", {"Foo": model({"a": {"type": "integer"}})})
+    assert check(base, current) == 0

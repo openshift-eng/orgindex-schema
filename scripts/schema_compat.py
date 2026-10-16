@@ -206,22 +206,42 @@ def check(baseline_path: Path, current: dict[str, Any]) -> int:
     for c in sorted(changes, key=lambda c: -c.severity):
         print(f"  {c}")
 
+    transition = f"{_schema_version(baseline)} -> {_schema_version(current)}"
+
     if cur_v < base_v:
-        print(f"\nFAIL: SCHEMA_VERSION went backwards ({_schema_version(baseline)} -> {_schema_version(current)}).")
+        print(f"\nFAIL: SCHEMA_VERSION went backwards ({transition}).")
         return 1
 
+    # Initial development (major 0): the contract is unstable, so a breaking change
+    # bumps the MINOR and an additive one the PATCH — no MAJOR ceremony yet.
+    if cur_v[0] == 0:
+        if severity == BREAKING and cur_v[:2] <= base_v[:2]:
+            print(
+                f"\nFAIL: breaking change detected but MINOR was not bumped ({transition}).\n"
+                f"While the contract is at 0.x, a breaking change requires a MINOR bump "
+                f"(0.N -> 0.N+1); see COMPATIBILITY.md."
+            )
+            return 1
+        if severity == ADDITIVE and cur_v <= base_v:
+            print(
+                f"\nFAIL: additive change detected but no bump ({transition}).\n"
+                f"While the contract is at 0.x, an additive change requires at least a PATCH bump."
+            )
+            return 1
+        print("\nOK: SCHEMA_VERSION bump is consistent with the detected change class (0.x initial development).")
+        return 0
+
+    # Stable (major >= 1): breaking -> MAJOR, additive -> at least MINOR.
     if severity == BREAKING and cur_v[0] <= base_v[0]:
         print(
-            f"\nFAIL: breaking change detected but MAJOR was not bumped "
-            f"({_schema_version(baseline)} -> {_schema_version(current)}).\n"
+            f"\nFAIL: breaking change detected but MAJOR was not bumped ({transition}).\n"
             f"A breaking change requires a new MAJOR and a coordinated rollout (see COMPATIBILITY.md)."
         )
         return 1
 
     if severity == ADDITIVE and cur_v[:2] <= base_v[:2]:
         print(
-            f"\nFAIL: additive change detected but MAJOR.MINOR was not bumped "
-            f"({_schema_version(baseline)} -> {_schema_version(current)}).\n"
+            f"\nFAIL: additive change detected but MAJOR.MINOR was not bumped ({transition}).\n"
             f"An additive change requires at least a MINOR bump."
         )
         return 1

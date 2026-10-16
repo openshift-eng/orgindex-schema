@@ -26,11 +26,13 @@ contract note the `SCHEMA_VERSION` transition and, for a major, link a migration
 - Documented the **support window / deprecation policy** and the package-major ↔
   `SCHEMA_VERSION`-major coupling in `COMPATIBILITY.md`.
 
-## [1.0.0] — unreleased
+## [0.1.0] — unreleased
 
-First published release. `SCHEMA_VERSION` 1.0.0 — the comprehensive-index contract
-as produced by the `cyborg` org-indexer and read by the `cyborg-data` clients.
-The package major is aligned to the contract major from this release onward.
+First published release, in **initial development (0.x)**. `SCHEMA_VERSION` 0.1.0 —
+the comprehensive-index contract as produced by the `cyborg` org-indexer and read by
+the `cyborg-data` clients. The shape may still change by `0.x` minor as the first
+consumer is built; the project will cut `1.0.0` once it is validated in a real
+consumer. The package major is coupled to the contract major throughout.
 
-[Unreleased]: https://github.com/openshift-eng/orgindex-schema/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/openshift-eng/orgindex-schema/releases/tag/v1.0.0
+[Unreleased]: https://github.com/openshift-eng/orgindex-schema/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/openshift-eng/orgindex-schema/releases/tag/v0.1.0

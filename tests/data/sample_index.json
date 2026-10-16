@@ -130,7 +130,7 @@
     }
   },
   "metadata": {
-    "schema_version": "1.0.0",
+    "schema_version": "0.1.0",
     "builders": ["ComponentIndexBuilder", "ComponentOwnershipIndexBuilder", "EmployeeIndexBuilder", "JiraIndexBuilder", "MembershipIndexBuilder", "OrgIndexBuilder"],
     "context_type_descriptions": { "team_overview": "Overview of a team." },
     "data_version": "abc123def456",

@@ -33,6 +33,22 @@ fails to publish.
 Within a major, minor/patch of the package and of `SCHEMA_VERSION` need not match:
 a packaging- or docs-only fix bumps the package patch while `SCHEMA_VERSION` holds.
 
+### Initial development (0.x)
+
+**The contract is currently at major `0`.** Per semver, major `0` means the shape is
+still in flux while the first consumer is being built, so the normal MAJOR ceremony
+is deferred and the bump rules shift down one place:
+
+- **breaking** change → bump the **MINOR** (`0.1.x → 0.2.0`)
+- **additive** change → bump the **PATCH** (`0.1.0 → 0.1.1`)
+- there is **no cross-major stability promise**; a `0.x` consumer pins to a single
+  minor (`orgindex-schema>=0.1,<0.2`).
+
+When the shape is validated by a real consumer, the project cuts **`1.0.0`** — the
+deliberate declaration of stability — and the rules above (breaking → MAJOR) take
+over. The breaking-change gate applies the `0.x` rules automatically while the major
+is `0`.
+
 ## SCHEMA_VERSION semver
 
 The contract version is semver over the *shape of the index JSON*:
@@ -84,8 +100,8 @@ generated from the current models against the last released baseline in
 `schema/baselines/v<major>.json`, classifies the diff as `breaking` / `additive` /
 `none` by the rules above, and fails unless `SCHEMA_VERSION` was bumped to match:
 
-- a breaking diff without a MAJOR bump fails;
-- an additive diff without at least a MINOR bump fails;
+- a breaking diff without the required bump fails (MAJOR when stable, MINOR while 0.x);
+- an additive diff without at least the required bump fails (MINOR when stable, PATCH while 0.x);
 - a version regression fails.
 
 The gate is conservative: an ambiguous change is classified as breaking, so the
@@ -94,9 +110,12 @@ Refresh the baseline on release with `make baseline`.
 
 ## Support window and deprecation
 
-- **Supported majors:** the current major and the previous major (N and N-1).
-  Older majors are out of support. On a new major, cut a `release-<old>.x` branch
-  so critical and security fixes can be backported to the old contract.
+This policy takes effect at **`1.0.0`**. While the contract is at `0.x` there is no
+support window: only the latest `0.x` is supported and breaking changes are expected.
+
+- **Supported majors (from 1.0):** the current major and the previous major (N and
+  N-1). Older majors are out of support. On a new major, cut a `release-<old>.x`
+  branch so critical and security fixes can be backported to the old contract.
 - **Deprecate before removing:** a field slated for removal is first made optional
   and flagged (producer/consumer emit a deprecation warning with a sunset date),
   then removed in the next major — mirroring how an absent `schema_version` is

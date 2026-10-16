@@ -7,7 +7,7 @@ and ``jira`` uses the literal ``"_project_level"`` key. None of these must be
 required, and none must be lost on round-trip.
 """
 
-from orgindex_schema import ComprehensiveIndexModel, ParentRef
+from orgindex_schema import SCHEMA_VERSION, ComprehensiveIndexModel, ParentRef
 
 
 def _m(data: dict) -> ComprehensiveIndexModel:
@@ -89,6 +89,6 @@ def test_metadata_without_schema_version_roundtrips() -> None:
     data = {"metadata": {"data_version": "v", "generated_at": "t", "total_employees": 5}}
     model = _m(data)
     # in-process the default is available ...
-    assert model.metadata.schema_version == "1.0.0"
+    assert model.metadata.schema_version == SCHEMA_VERSION
     # ... but an older index that omitted it stays omitted on round-trip
     assert "schema_version" not in model.model_dump(exclude_unset=True)["metadata"]
