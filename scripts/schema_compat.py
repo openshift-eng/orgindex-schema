@@ -32,6 +32,9 @@ from typing import Any
 NONE, ADDITIVE, BREAKING = 0, 1, 2
 _LABEL = {NONE: "none", ADDITIVE: "additive", BREAKING: "breaking"}
 
+# Synthetic model name for the schema root envelope (not a real $def).
+ROOT = "<root>"
+
 # JSON Schema keywords that make a value *more* restrictive. Adding one (or
 # tightening it) is breaking; removing one is additive. The current models use
 # none of these, so this path is dormant but guards future constraint creep.
@@ -71,9 +74,18 @@ def _defs(schema: dict[str, Any]) -> dict[str, dict[str, Any]]:
 
 
 def _enum(node: dict[str, Any]) -> set[Any] | None:
-    """Return the enum value set of a property node, or ``None`` if it is not an enum."""
+    """Return the enum value set of a node, or ``None`` if it is not an enum.
+
+    Looks through ``anyOf``/``oneOf``/``allOf`` so a nullable/union enum
+    (e.g. ``Optional[SomeEnum]`` -> ``anyOf: [{enum: ...}, {type: null}]``) is
+    still recognized. Works on both a property node and an enum ``$def``."""
     if "enum" in node:
         return set(node["enum"])
+    for key in ("anyOf", "oneOf", "allOf"):
+        for sub in node.get(key, []):
+            found = _enum(sub)
+            if found is not None:
+                return found
     return None
 
 
@@ -130,16 +142,38 @@ def _compare_prop(where: str, old: dict[str, Any], new: dict[str, Any]) -> Chang
     return None
 
 
+def _models(schema: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    """Every comparable model: the named ``$defs`` plus the *root* envelope.
+
+    The top-level model (``ComprehensiveIndexModel``) is emitted at the schema
+    root (``properties``/``required``), not inside ``$defs``, so it must be
+    folded in explicitly or a breaking change to the envelope goes undetected."""
+    models = dict(_defs(schema))
+    if "properties" in schema or "required" in schema:
+        models[ROOT] = {"properties": schema.get("properties", {}), "required": schema.get("required", [])}
+    return models
+
+
 def diff_schemas(baseline: dict[str, Any], current: dict[str, Any]) -> list[Change]:
     """Classified differences from ``baseline`` to ``current`` per COMPATIBILITY.md."""
     changes: list[Change] = []
-    base_defs, cur_defs = _defs(baseline), _defs(current)
+    base_models, cur_models = _models(baseline), _models(current)
 
-    for name, base_def in base_defs.items():
-        if name not in cur_defs:
+    for name, base_def in base_models.items():
+        if name not in cur_models:
             changes.append(Change(BREAKING, f"definition '{name}' removed or renamed"))
             continue
-        cur_def = cur_defs[name]
+        cur_def = cur_models[name]
+
+        # A standalone enum renders as its own $def (enum list, no properties).
+        base_enum, cur_enum = _enum(base_def), _enum(cur_def)
+        if base_enum is not None and cur_enum is not None:
+            removed, added = base_enum - cur_enum, cur_enum - base_enum
+            if removed:
+                changes.append(Change(BREAKING, f"{name}: enum value(s) removed: {sorted(map(str, removed))}"))
+            elif added:
+                changes.append(Change(ADDITIVE, f"{name}: enum value(s) added: {sorted(map(str, added))}"))
+
         base_props = base_def.get("properties", {})
         cur_props = cur_def.get("properties", {})
         base_req = set(base_def.get("required", []))
@@ -155,6 +189,9 @@ def diff_schemas(baseline: dict[str, Any], current: dict[str, Any]) -> list[Chan
                 changes.append(change)
             if field in cur_req and field not in base_req:
                 changes.append(Change(BREAKING, f"{where}: optional field became required"))
+            elif field in base_req and field not in cur_req:
+                # Relaxation: the producer may now omit a once-guaranteed field.
+                changes.append(Change(ADDITIVE, f"{where}: required field became optional"))
 
         for field in cur_props:
             if field not in base_props:
@@ -182,7 +219,7 @@ def _parse_semver(version: str) -> tuple[int, int, int]:
 
 
 def _pick_baseline() -> Path:
-    candidates = sorted(BASELINE_DIR.glob("v*.json"))
+    candidates = list(BASELINE_DIR.glob("v*.json"))
     if not candidates:
         raise SystemExit(f"no baselines found in {BASELINE_DIR}")
     return max(candidates, key=lambda p: int(p.stem.lstrip("v")))

@@ -12,13 +12,25 @@ import pytest
 from scripts.schema_compat import ADDITIVE, BREAKING, NONE, check, diff_schemas
 
 
-def make_schema(version: str, defs: dict[str, Any]) -> dict[str, Any]:
-    """A minimal schema carrying a contract version and the given ``$defs``."""
+def make_schema(
+    version: str,
+    defs: dict[str, Any],
+    root_props: dict[str, Any] | None = None,
+    root_req: list[str] | None = None,
+) -> dict[str, Any]:
+    """A minimal schema carrying a contract version and the given ``$defs``.
+
+    ``root_props``/``root_req`` populate the top-level envelope (what pydantic
+    emits for the root model outside ``$defs``)."""
     metadata = {
         "properties": {"schema_version": {"default": version, "type": "string"}},
         "required": [],
     }
-    return {"$defs": {"Metadata": metadata, **defs}}
+    schema: dict[str, Any] = {"$defs": {"Metadata": metadata, **defs}}
+    if root_props is not None or root_req is not None:
+        schema["properties"] = root_props or {}
+        schema["required"] = root_req or []
+    return schema
 
 
 def model(properties: dict[str, Any], required: list[str] | None = None) -> dict[str, Any]:
@@ -177,3 +189,71 @@ def test_check_promotion_to_1_0_0_is_allowed(tmp_path: Path) -> None:
     base = write_baseline(tmp_path, "0.5.0", {"Foo": model({"a": {"type": "string"}})})
     current = make_schema("1.0.0", {"Foo": model({"a": {"type": "integer"}})})
     assert check(base, current) == 0
+
+
+# ---- root envelope (the top-level model lives outside $defs) ----
+
+
+def root_severity(
+    base_props: dict[str, Any],
+    cur_props: dict[str, Any],
+    base_req: list[str] | None = None,
+    cur_req: list[str] | None = None,
+) -> int:
+    base = make_schema("1.0.0", {}, root_props=base_props, root_req=base_req or [])
+    cur = make_schema("1.0.0", {}, root_props=cur_props, root_req=cur_req or [])
+    return max((c.severity for c in diff_schemas(base, cur)), default=NONE)
+
+
+def test_root_field_removed_is_breaking() -> None:
+    base = {"lookups": {"$ref": "#/$defs/Lookups"}, "metadata": {"$ref": "#/$defs/Metadata"}}
+    cur = {"metadata": {"$ref": "#/$defs/Metadata"}}
+    assert root_severity(base, cur) == BREAKING
+
+
+def test_root_field_retyped_is_breaking() -> None:
+    base = {"metadata": {"$ref": "#/$defs/Metadata"}}
+    cur = {"metadata": {"$ref": "#/$defs/Lookups"}}
+    assert root_severity(base, cur) == BREAKING
+
+
+def test_root_new_required_field_is_breaking() -> None:
+    base = {"metadata": {"$ref": "#/$defs/Metadata"}}
+    cur = {"metadata": {"$ref": "#/$defs/Metadata"}, "extra": {"type": "string"}}
+    assert root_severity(base, cur, cur_req=["extra"]) == BREAKING
+
+
+def test_root_new_optional_field_is_additive() -> None:
+    base = {"metadata": {"$ref": "#/$defs/Metadata"}}
+    cur = {"metadata": {"$ref": "#/$defs/Metadata"}, "extra": {"type": "string"}}
+    assert root_severity(base, cur) == ADDITIVE
+
+
+# ---- enums rendered as their own $def, and nullable/union enums ----
+
+
+def test_standalone_enum_def_value_removed_is_breaking() -> None:
+    base = {"Color": {"type": "string", "enum": ["r", "g", "b"]}}
+    cur = {"Color": {"type": "string", "enum": ["r", "g"]}}
+    assert severity_of(base, cur) == BREAKING
+
+
+def test_standalone_enum_def_value_added_is_additive() -> None:
+    base = {"Color": {"type": "string", "enum": ["r", "g"]}}
+    cur = {"Color": {"type": "string", "enum": ["r", "g", "b"]}}
+    assert severity_of(base, cur) == ADDITIVE
+
+
+def test_nullable_enum_value_removed_is_breaking() -> None:
+    base = {"Foo": model({"c": {"anyOf": [{"type": "string", "enum": ["x", "y"]}, {"type": "null"}]}})}
+    cur = {"Foo": model({"c": {"anyOf": [{"type": "string", "enum": ["x"]}, {"type": "null"}]}})}
+    assert severity_of(base, cur) == BREAKING
+
+
+# ---- required -> optional (relaxation) ----
+
+
+def test_field_becoming_optional_is_additive() -> None:
+    base = {"Foo": model({"a": {"type": "string"}}, required=["a"])}
+    cur = {"Foo": model({"a": {"type": "string"}})}
+    assert severity_of(base, cur) == ADDITIVE
