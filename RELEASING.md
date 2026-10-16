@@ -28,22 +28,34 @@ Once stable (`>= 1.0.0`):
 3. If the contract changed, confirm `SCHEMA_VERSION` was bumped (the
    `compat-check` gate will have blocked the PR otherwise) and that
    `schema/baselines/` is current — run `make baseline` and commit if needed.
-4. Tag and push:
+4. Tag and push a **signed** tag on the commit to release (requires push access):
    ```bash
-   git tag -s -a v1.2.0 -m "v1.2.0"
+   git tag -s v1.2.0 -m "v1.2.0"
    git push origin v1.2.0
    ```
-5. The `Release` workflow builds, runs the full gate, verifies the version
-   coupling, publishes to PyPI (Trusted Publishing + attestations), and creates
-   the GitHub Release.
+   (Unsigned `git tag -a` also works — the workflow does not verify signatures.)
+5. The `Release` workflow builds, runs the full gate, and verifies the version
+   coupling, then **pauses at the `pypi` environment for a required-reviewer
+   approval**.
+6. **Approve the deployment:** Actions → the release run → **Review deployments** →
+   approve `pypi` (a designated reviewer who is not the tag author). It then
+   publishes to PyPI (Trusted Publishing + attestations) and creates the GitHub
+   Release. Nothing publishes until this approval.
 
 ## Pre-release dry run
 
-Tag a pre-release (`v1.2.0rc1`) to publish to **TestPyPI** only. Install from there
-to smoke-test before the final tag:
+Tag a pre-release (`v1.2.0rc1`) to publish to **TestPyPI** only — no approval gate,
+no GitHub Release:
 
 ```bash
-git tag -s -a v1.2.0rc1 -m "v1.2.0rc1" && git push origin v1.2.0rc1
+git tag -s v1.2.0rc1 -m "v1.2.0rc1" && git push origin v1.2.0rc1
+```
+
+Then smoke-test the install from TestPyPI before the final tag:
+
+```bash
+pip install --index-url https://test.pypi.org/simple/ \
+  --extra-index-url https://pypi.org/simple/ "orgindex-schema==1.2.0rc1"
 ```
 
 ## Cutting a MAJOR (breaking) release
@@ -63,9 +75,15 @@ A breaking change is a deliberate, coordinated event — do not burn these steps
 
 ## One-time setup (maintainers)
 
-- **PyPI Trusted Publisher** (project `orgindex-schema`): add a publisher for
+This is **already configured** for `orgindex-schema`; kept here for reference and
+for setting up a new line/repo.
+
+- **PyPI Trusted Publisher** (project `orgindex-schema`): a publisher for
   `openshift-eng/orgindex-schema`, workflow `release.yml`, environment `pypi`.
-- Repeat on **TestPyPI** with environment `testpypi`.
-- Create the `pypi` and `testpypi` **GitHub Environments**; add required reviewers
-  to `pypi` so each production publish is human-approved.
-- Protect `main` and `release-*`: require the `CI / checks` jobs to pass.
+- Same on **TestPyPI** with environment `testpypi`.
+- The `pypi` and `testpypi` **GitHub Environments**; `pypi` has required reviewers
+  (`hoxhaeris`, `bradmwilliams`) and is restricted to `v*` tags, so each production
+  publish is human-approved.
+- Branch protection on `main` requires the Prow presubmits (`ci/prow/*`) to pass.
+- **Add co-owners on PyPI** (project → Manage → Collaborators) so the project is
+  not single-owner — do this right after the first publish.
