@@ -6,10 +6,32 @@
   of the on-disk index *contract*. The producer embeds it in
   `metadata.schema_version`; consumers check it at load time. This document
   governs this number.
-- **Package version** (`pyproject.toml`, currently `0.1.0`): the Python
-  distribution version. Consumers pin it by git tag
-  (`orgindex-schema @ git+...@v0.1.0`). It is bumped for any release, including
-  doc-only ones, and moves independently of `SCHEMA_VERSION`.
+- **Package version** (derived from the git tag by `hatch-vcs`, exposed as
+  `orgindex_schema.__version__`): the Python distribution version on PyPI. It is
+  bumped for any release, including doc-only ones. Its **major is coupled** to
+  `SCHEMA_VERSION`'s major (see below); its minor/patch move independently.
+
+## Package version ↔ SCHEMA_VERSION coupling
+
+The two numbers are distinct but their **majors move together**:
+
+> **The package MAJOR equals `SCHEMA_VERSION`'s major.** A contract break
+> (`SCHEMA_VERSION 1.x → 2.0`) ships as a new package major (`→ 2.0.0`).
+
+This makes a consumer's dependency pin a real, resolver-enforced compatibility
+check rather than a convention. A consumer that reads a major-1 index pins:
+
+```
+orgindex-schema>=1,<2
+```
+
+and pip/uv will refuse to install a breaking major — the runtime `schema_version`
+check (below) is then defense-in-depth, not the only guard. The release workflow
+enforces the coupling: a tag whose major disagrees with `SCHEMA_VERSION`'s major
+fails to publish.
+
+Within a major, minor/patch of the package and of `SCHEMA_VERSION` need not match:
+a packaging- or docs-only fix bumps the package patch while `SCHEMA_VERSION` holds.
 
 ## SCHEMA_VERSION semver
 
@@ -54,6 +76,31 @@ check in the Go and Python clients follows.
 4. A MAJOR bump is a deliberate, human-reviewed decision. Coordinate the rollout
    across the producer and every consumer before merging.
 
-An automated breaking-change gate, diffing a proposed schema against the oldest
-supported baseline and blocking an un-flagged breaking change, is planned.
-Until it exists, the correctness of a version bump is enforced by review.
+## Automated breaking-change gate
+
+The correctness of a version bump is enforced automatically, not just by review.
+`scripts/schema_compat.py` (run by `make compat-check` and in CI) diffs the schema
+generated from the current models against the last released baseline in
+`schema/baselines/v<major>.json`, classifies the diff as `breaking` / `additive` /
+`none` by the rules above, and fails unless `SCHEMA_VERSION` was bumped to match:
+
+- a breaking diff without a MAJOR bump fails;
+- an additive diff without at least a MINOR bump fails;
+- a version regression fails.
+
+The gate is conservative: an ambiguous change is classified as breaking, so the
+failure mode is "asks for a bigger bump," never "lets a break through un-flagged".
+Refresh the baseline on release with `make baseline`.
+
+## Support window and deprecation
+
+- **Supported majors:** the current major and the previous major (N and N-1).
+  Older majors are out of support. On a new major, cut a `release-<old>.x` branch
+  so critical and security fixes can be backported to the old contract.
+- **Deprecate before removing:** a field slated for removal is first made optional
+  and flagged (producer/consumer emit a deprecation warning with a sunset date),
+  then removed in the next major — mirroring how an absent `schema_version` is
+  warned-and-loaded with a sunset date today.
+- **Coordinated rollout:** a major is landed producer-first (it embeds the new
+  `schema_version`), then consumers, then the old major is sunset. See
+  `RELEASING.md` for the checklist.

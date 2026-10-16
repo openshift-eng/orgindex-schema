@@ -1,11 +1,13 @@
 [build-system]
-requires = ["hatchling>=1.27"]
+requires = ["hatchling>=1.27", "hatch-vcs>=0.4"]
 build-backend = "hatchling.build"
 
 [project]
 name = "orgindex-schema"
-version = "0.1.0"
-description = "Canonical, versioned pydantic schema for the organizational data comprehensive index (the on-disk contract between the cyborg producer and cyborg-data consumers)."
+# Version is derived from the git tag by hatch-vcs (see [tool.hatch.version]).
+# The package MAJOR tracks SCHEMA_VERSION's major; see COMPATIBILITY.md.
+dynamic = ["version"]
+description = "Canonical, versioned pydantic schema for the organizational data comprehensive index (the on-disk contract between the cyborg producer and cyborg-data consumers). Primarily for internal Red Hat / openshift-eng use."
 readme = "README.md"
 license = "Apache-2.0"
 license-files = ["LICENSE"]
@@ -13,7 +15,7 @@ requires-python = ">=3.11"
 authors = [{ name = "Continuous Release Tooling - Red Hat" }]
 keywords = ["organizational-data", "index", "schema", "contract"]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
@@ -28,24 +30,36 @@ dependencies = ["pydantic>=2.7"]
 dev = ["pytest>=8.0,<9", "mypy>=1.13,<2.0", "ruff>=0.6,<0.9"]
 
 [project.urls]
+Homepage = "https://github.com/openshift-eng/orgindex-schema"
 Repository = "https://github.com/openshift-eng/orgindex-schema"
+Changelog = "https://github.com/openshift-eng/orgindex-schema/blob/main/CHANGELOG.md"
+Issues = "https://github.com/openshift-eng/orgindex-schema/issues"
+
+[tool.hatch.version]
+source = "vcs"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/orgindex_schema"]
 
+[tool.hatch.build.targets.sdist]
+# Ship the sources needed to rebuild and verify the contract, nothing else.
+include = ["src", "tests", "scripts", "schema", "index.schema.json", "Makefile", "COMPATIBILITY.md"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q --strict-markers --strict-config"
+# Repo root on the path so tests can import the `scripts` tooling package.
+pythonpath = ["."]
 
 [tool.mypy]
 python_version = "3.11"
 strict = true
-packages = ["orgindex_schema"]
+packages = ["orgindex_schema", "scripts"]
 
 [tool.ruff]
 line-length = 120
 target-version = "py311"
-src = ["src", "tests"]
+src = ["src", "tests", "scripts"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "C4", "SIM", "UP", "RUF", "N", "PGH"]

@@ -1,0 +1,110 @@
+name: Release
+
+# Tag-driven releases. Push an annotated, signed tag to publish:
+#   v1.2.3        -> build, verify, publish to PyPI, cut a GitHub Release
+#   v1.2.3rc1     -> build, verify, publish to TestPyPI only (dry run)
+# Publishing uses PyPI Trusted Publishing (OIDC) — no API tokens are stored.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: build & verify
+    runs-on: ubuntu-latest
+    outputs:
+      prerelease: ${{ steps.classify.outputs.prerelease }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+
+      # Never publish a red tree: run the full gate (incl. the breaking-change gate).
+      - run: make all
+
+      # Enforce the coupling rule: package MAJOR must equal SCHEMA_VERSION's major.
+      - name: Verify version coupling
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          PKG_MAJOR="${TAG%%.*}"
+          SCHEMA_MAJOR="$(uv run python -c 'from orgindex_schema import SCHEMA_VERSION; print(SCHEMA_VERSION.split(".")[0])')"
+          echo "tag=${TAG} package-major=${PKG_MAJOR} schema-major=${SCHEMA_MAJOR}"
+          if [ "${PKG_MAJOR}" != "${SCHEMA_MAJOR}" ]; then
+            echo "::error::package major (${PKG_MAJOR}) != SCHEMA_VERSION major (${SCHEMA_MAJOR}); see COMPATIBILITY.md"
+            exit 1
+          fi
+
+      - name: Classify (pre-release vs final)
+        id: classify
+        run: |
+          case "${GITHUB_REF_NAME}" in
+            *rc*|*a*|*b*|*.dev*) echo "prerelease=true" >> "$GITHUB_OUTPUT" ;;
+            *) echo "prerelease=false" >> "$GITHUB_OUTPUT" ;;
+          esac
+
+      - run: uv build
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: dist
+          path: dist/
+
+  testpypi:
+    name: publish to TestPyPI
+    needs: build
+    if: needs.build.outputs.prerelease == 'true'
+    runs-on: ubuntu-latest
+    environment: testpypi
+    permissions:
+      id-token: write # OIDC for Trusted Publishing
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          attestations: true
+
+  pypi:
+    name: publish to PyPI
+    needs: build
+    if: needs.build.outputs.prerelease == 'false'
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write # OIDC for Trusted Publishing
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # release/v1
+        with:
+          attestations: true
+
+  github-release:
+    name: GitHub Release
+    needs: [build, pypi]
+    if: needs.build.outputs.prerelease == 'false'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: dist
+          path: dist/
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" dist/* \
+            --title "${GITHUB_REF_NAME}" \
+            --generate-notes
