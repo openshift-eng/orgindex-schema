@@ -7,6 +7,14 @@ updates:
       interval: weekly
     commit-message:
       prefix: "ci"
+    # One batched PR per run instead of one per action.
+    groups:
+      github-actions:
+        patterns: ["*"]
+    # Let a release settle before proposing it; wait longer for majors.
+    cooldown:
+      default-days: 7
+      semver-major-days: 30
 
   # Watch the runtime/dev dependency bounds (notably the pydantic floor).
   - package-ecosystem: pip
@@ -15,3 +23,9 @@ updates:
       interval: weekly
     commit-message:
       prefix: "deps"
+    groups:
+      python:
+        patterns: ["*"]
+    cooldown:
+      default-days: 7
+      semver-major-days: 30
