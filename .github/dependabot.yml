@@ -1,0 +1,17 @@
+version: 2
+updates:
+  # Keep GitHub Actions pinned by SHA and up to date (security-relevant).
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "ci"
+
+  # Watch the runtime/dev dependency bounds (notably the pydantic floor).
+  - package-ecosystem: pip
+    directory: "/"
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "deps"

@@ -3,13 +3,11 @@
 python -m orgindex_schema > index.schema.json
 """
 
-import json
-
-from .schema import generate_json_schema
+from .schema import dumps_canonical, generate_json_schema
 
 
 def main() -> None:
-    print(json.dumps(generate_json_schema(), indent=2, sort_keys=True))
+    print(dumps_canonical(generate_json_schema()))
 
 
 if __name__ == "__main__":

@@ -8,8 +8,13 @@ Versioning policy (see COMPATIBILITY.md):
 
 Consumers compare the ``schema_version`` embedded in a loaded index against the
 version they were built with and reject an incompatible major.
+
+While the contract is at major ``0`` it is in *initial development*: the shape may
+still change as the first consumer is built, so a breaking change bumps the MINOR
+and an additive change bumps the PATCH. There is no stability promise until
+``1.0.0``; see COMPATIBILITY.md.
 """
 
 from typing import Final
 
-SCHEMA_VERSION: Final = "1.0.0"
+SCHEMA_VERSION: Final = "0.1.0"

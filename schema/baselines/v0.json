@@ -1,0 +1,1015 @@
+{
+  "$defs": {
+    "ComponentEntry": {
+      "description": "Components are not identity-mapped, so they carry no ``stable_id``/``parent_id``.",
+      "properties": {
+        "component": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ComponentInner"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Description"
+        },
+        "name": {
+          "default": "",
+          "title": "Name",
+          "type": "string"
+        },
+        "parent": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ParentRef"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "repos_list": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Repos List",
+          "type": "array"
+        }
+      },
+      "title": "ComponentEntry",
+      "type": "object"
+    },
+    "ComponentInner": {
+      "description": "Here ``parent`` is a file-path string, unlike the top-level :class:`ParentRef`.",
+      "properties": {
+        "context": {
+          "items": {
+            "$ref": "#/$defs/ContextItemInfo"
+          },
+          "title": "Context",
+          "type": "array"
+        },
+        "jiras": {
+          "items": {
+            "$ref": "#/$defs/JiraInfo"
+          },
+          "title": "Jiras",
+          "type": "array"
+        },
+        "parent": {
+          "default": "",
+          "title": "Parent",
+          "type": "string"
+        },
+        "related_components": {
+          "items": {
+            "$ref": "#/$defs/RelatedComponentInfo"
+          },
+          "title": "Related Components",
+          "type": "array"
+        },
+        "repos": {
+          "items": {
+            "$ref": "#/$defs/RepoInfo"
+          },
+          "title": "Repos",
+          "type": "array"
+        },
+        "resolved_context": {
+          "items": {
+            "$ref": "#/$defs/ContextItemInfo"
+          },
+          "title": "Resolved Context",
+          "type": "array"
+        },
+        "resources": {
+          "items": {
+            "$ref": "#/$defs/ResourceInfo"
+          },
+          "title": "Resources",
+          "type": "array"
+        },
+        "type": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/GroupTypeInfo"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "title": "ComponentInner",
+      "type": "object"
+    },
+    "ComponentOwner": {
+      "properties": {
+        "name": {
+          "default": "",
+          "title": "Name",
+          "type": "string"
+        },
+        "ownership_types": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Ownership Types",
+          "type": "array"
+        },
+        "type": {
+          "default": "",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "title": "ComponentOwner",
+      "type": "object"
+    },
+    "ContextItemInfo": {
+      "description": "``source_entity``/``source_type`` are set on ``resolved_context`` and empty on raw ``context``.",
+      "properties": {
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Description"
+        },
+        "inheritance": {
+          "default": "additive",
+          "title": "Inheritance",
+          "type": "string"
+        },
+        "name": {
+          "default": "",
+          "title": "Name",
+          "type": "string"
+        },
+        "owner": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Owner"
+        },
+        "source_entity": {
+          "default": "",
+          "title": "Source Entity",
+          "type": "string"
+        },
+        "source_type": {
+          "default": "",
+          "title": "Source Type",
+          "type": "string"
+        },
+        "types": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Types",
+          "type": "array"
+        },
+        "url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Url"
+        }
+      },
+      "title": "ContextItemInfo",
+      "type": "object"
+    },
+    "EmailInfo": {
+      "properties": {
+        "address": {
+          "default": "",
+          "title": "Address",
+          "type": "string"
+        },
+        "description": {
+          "default": "",
+          "title": "Description",
+          "type": "string"
+        },
+        "name": {
+          "default": "",
+          "title": "Name",
+          "type": "string"
+        }
+      },
+      "title": "EmailInfo",
+      "type": "object"
+    },
+    "EmployeeEntry": {
+      "properties": {
+        "email": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Email"
+        },
+        "full_name": {
+          "default": "",
+          "title": "Full Name",
+          "type": "string"
+        },
+        "github_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Github Id"
+        },
+        "job_title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Job Title"
+        },
+        "manager_uid": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Manager Uid"
+        },
+        "possible_github_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Possible Github Ids",
+          "type": "array"
+        },
+        "slack_uid": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Slack Uid"
+        },
+        "timezone": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Timezone"
+        },
+        "uid": {
+          "default": "",
+          "title": "Uid",
+          "type": "string"
+        }
+      },
+      "title": "EmployeeEntry",
+      "type": "object"
+    },
+    "EscalationContactInfo": {
+      "description": "In the PII-free index ``name``/``description`` are ``\"[REDACTED]\"`` and ``url`` is blank.",
+      "properties": {
+        "description": {
+          "default": "",
+          "title": "Description",
+          "type": "string"
+        },
+        "name": {
+          "default": "",
+          "title": "Name",
+          "type": "string"
+        },
+        "url": {
+          "default": "",
+          "title": "Url",
+          "type": "string"
+        }
+      },
+      "title": "EscalationContactInfo",
+      "type": "object"
+    },
+    "GitHubIdMappings": {
+      "properties": {
+        "github_id_to_uid": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Github Id To Uid",
+          "type": "object"
+        }
+      },
+      "title": "GitHubIdMappings",
+      "type": "object"
+    },
+    "GroupInfo": {
+      "properties": {
+        "component_roles": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Component Roles",
+          "type": "array"
+        },
+        "context": {
+          "items": {
+            "$ref": "#/$defs/ContextItemInfo"
+          },
+          "title": "Context",
+          "type": "array"
+        },
+        "emails": {
+          "items": {
+            "$ref": "#/$defs/EmailInfo"
+          },
+          "title": "Emails",
+          "type": "array"
+        },
+        "escalation": {
+          "items": {
+            "$ref": "#/$defs/EscalationContactInfo"
+          },
+          "title": "Escalation",
+          "type": "array"
+        },
+        "jiras": {
+          "items": {
+            "$ref": "#/$defs/JiraInfo"
+          },
+          "title": "Jiras",
+          "type": "array"
+        },
+        "keywords": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Keywords"
+        },
+        "repos": {
+          "items": {
+            "$ref": "#/$defs/RepoInfo"
+          },
+          "title": "Repos",
+          "type": "array"
+        },
+        "resolved_context": {
+          "items": {
+            "$ref": "#/$defs/ContextItemInfo"
+          },
+          "title": "Resolved Context",
+          "type": "array"
+        },
+        "resolved_people_uid_list": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Resolved People Uid List",
+          "type": "array"
+        },
+        "resolved_roles": {
+          "items": {
+            "$ref": "#/$defs/RoleInfo"
+          },
+          "title": "Resolved Roles",
+          "type": "array"
+        },
+        "resources": {
+          "items": {
+            "$ref": "#/$defs/ResourceInfo"
+          },
+          "title": "Resources",
+          "type": "array"
+        },
+        "slack": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SlackConfigInfo"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "type": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/GroupTypeInfo"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "title": "GroupInfo",
+      "type": "object"
+    },
+    "GroupTypeInfo": {
+      "properties": {
+        "name": {
+          "default": "",
+          "title": "Name",
+          "type": "string"
+        },
+        "visualize": {
+          "default": false,
+          "title": "Visualize",
+          "type": "boolean"
+        },
+        "visualize_group": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Visualize Group"
+        }
+      },
+      "title": "GroupTypeInfo",
+      "type": "object"
+    },
+    "HierarchyEntity": {
+      "description": "Shared by teams/orgs/pillars/team_groups/cohorts. The entity type lives in\n``group.type.name`` and the collection key, not a top-level ``uid``/``type``.",
+      "properties": {
+        "description": {
+          "default": "",
+          "title": "Description",
+          "type": "string"
+        },
+        "group": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/GroupInfo"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "name": {
+          "default": "",
+          "title": "Name",
+          "type": "string"
+        },
+        "parent": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ParentRef"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "parent_id": {
+          "default": "",
+          "title": "Parent Id",
+          "type": "string"
+        },
+        "stable_id": {
+          "default": "",
+          "title": "Stable Id",
+          "type": "string"
+        }
+      },
+      "title": "HierarchyEntity",
+      "type": "object"
+    },
+    "Indexes": {
+      "description": "``jira`` maps ``project -> component -> [owner]`` with the literal key\n``\"_project_level\"`` for project-level ownership; ``component_ownership`` maps\n``component_name -> [owner]``.",
+      "properties": {
+        "component_ownership": {
+          "additionalProperties": {
+            "items": {
+              "$ref": "#/$defs/ComponentOwner"
+            },
+            "type": "array"
+          },
+          "title": "Component Ownership",
+          "type": "object"
+        },
+        "github_id_mappings": {
+          "$ref": "#/$defs/GitHubIdMappings"
+        },
+        "jira": {
+          "additionalProperties": {
+            "additionalProperties": {
+              "items": {
+                "$ref": "#/$defs/JiraOwner"
+              },
+              "type": "array"
+            },
+            "type": "object"
+          },
+          "title": "Jira",
+          "type": "object"
+        },
+        "membership": {
+          "$ref": "#/$defs/MembershipIndexInfo"
+        },
+        "slack_id_mappings": {
+          "$ref": "#/$defs/SlackIdMappings"
+        }
+      },
+      "title": "Indexes",
+      "type": "object"
+    },
+    "JiraInfo": {
+      "description": "``component`` is set on component entries and empty on hierarchy entities.",
+      "properties": {
+        "component": {
+          "default": "",
+          "title": "Component",
+          "type": "string"
+        },
+        "description": {
+          "default": "",
+          "title": "Description",
+          "type": "string"
+        },
+        "project": {
+          "default": "",
+          "title": "Project",
+          "type": "string"
+        },
+        "types": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Types",
+          "type": "array"
+        },
+        "view": {
+          "default": "",
+          "title": "View",
+          "type": "string"
+        }
+      },
+      "title": "JiraInfo",
+      "type": "object"
+    },
+    "JiraOwner": {
+      "properties": {
+        "name": {
+          "default": "",
+          "title": "Name",
+          "type": "string"
+        },
+        "type": {
+          "default": "",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "title": "JiraOwner",
+      "type": "object"
+    },
+    "Lookups": {
+      "properties": {
+        "cohorts": {
+          "additionalProperties": {
+            "$ref": "#/$defs/HierarchyEntity"
+          },
+          "title": "Cohorts",
+          "type": "object"
+        },
+        "components": {
+          "additionalProperties": {
+            "$ref": "#/$defs/ComponentEntry"
+          },
+          "title": "Components",
+          "type": "object"
+        },
+        "employees": {
+          "additionalProperties": {
+            "$ref": "#/$defs/EmployeeEntry"
+          },
+          "title": "Employees",
+          "type": "object"
+        },
+        "orgs": {
+          "additionalProperties": {
+            "$ref": "#/$defs/HierarchyEntity"
+          },
+          "title": "Orgs",
+          "type": "object"
+        },
+        "pillars": {
+          "additionalProperties": {
+            "$ref": "#/$defs/HierarchyEntity"
+          },
+          "title": "Pillars",
+          "type": "object"
+        },
+        "team_groups": {
+          "additionalProperties": {
+            "$ref": "#/$defs/HierarchyEntity"
+          },
+          "title": "Team Groups",
+          "type": "object"
+        },
+        "teams": {
+          "additionalProperties": {
+            "$ref": "#/$defs/HierarchyEntity"
+          },
+          "title": "Teams",
+          "type": "object"
+        }
+      },
+      "title": "Lookups",
+      "type": "object"
+    },
+    "MembershipEntry": {
+      "properties": {
+        "name": {
+          "default": "",
+          "title": "Name",
+          "type": "string"
+        },
+        "stable_id": {
+          "default": "",
+          "title": "Stable Id",
+          "type": "string"
+        },
+        "type": {
+          "default": "",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "title": "MembershipEntry",
+      "type": "object"
+    },
+    "MembershipIndexInfo": {
+      "properties": {
+        "membership_index": {
+          "additionalProperties": {
+            "items": {
+              "$ref": "#/$defs/MembershipEntry"
+            },
+            "type": "array"
+          },
+          "title": "Membership Index",
+          "type": "object"
+        }
+      },
+      "title": "MembershipIndexInfo",
+      "type": "object"
+    },
+    "Metadata": {
+      "properties": {
+        "builders": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Builders",
+          "type": "array"
+        },
+        "context_type_descriptions": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Context Type Descriptions",
+          "type": "object"
+        },
+        "data_version": {
+          "default": "",
+          "title": "Data Version",
+          "type": "string"
+        },
+        "generated_at": {
+          "default": "",
+          "title": "Generated At",
+          "type": "string"
+        },
+        "pii_free": {
+          "default": false,
+          "title": "Pii Free",
+          "type": "boolean"
+        },
+        "schema_version": {
+          "default": "0.1.0",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "supported_queries": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Supported Queries",
+          "type": "array"
+        },
+        "total_employees": {
+          "default": 0,
+          "title": "Total Employees",
+          "type": "integer"
+        },
+        "total_orgs": {
+          "default": 0,
+          "title": "Total Orgs",
+          "type": "integer"
+        }
+      },
+      "title": "Metadata",
+      "type": "object"
+    },
+    "ParentRef": {
+      "properties": {
+        "name": {
+          "default": "",
+          "title": "Name",
+          "type": "string"
+        },
+        "type": {
+          "default": "",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "title": "ParentRef",
+      "type": "object"
+    },
+    "RelatedComponentInfo": {
+      "properties": {
+        "component_path": {
+          "default": "",
+          "title": "Component Path",
+          "type": "string"
+        },
+        "types": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Types",
+          "type": "array"
+        }
+      },
+      "title": "RelatedComponentInfo",
+      "type": "object"
+    },
+    "RepoInfo": {
+      "description": "On-disk key is ``repo_name``, not ``repo``.",
+      "properties": {
+        "branch": {
+          "default": "",
+          "title": "Branch",
+          "type": "string"
+        },
+        "description": {
+          "default": "",
+          "title": "Description",
+          "type": "string"
+        },
+        "path": {
+          "default": "",
+          "title": "Path",
+          "type": "string"
+        },
+        "repo_name": {
+          "default": "",
+          "title": "Repo Name",
+          "type": "string"
+        },
+        "roles": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Roles",
+          "type": "array"
+        },
+        "tags": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Tags",
+          "type": "array"
+        },
+        "types": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Types",
+          "type": "array"
+        }
+      },
+      "title": "RepoInfo",
+      "type": "object"
+    },
+    "ResourceInfo": {
+      "properties": {
+        "description": {
+          "default": "",
+          "title": "Description",
+          "type": "string"
+        },
+        "name": {
+          "default": "",
+          "title": "Name",
+          "type": "string"
+        },
+        "url": {
+          "default": "",
+          "title": "Url",
+          "type": "string"
+        }
+      },
+      "title": "ResourceInfo",
+      "type": "object"
+    },
+    "RoleInfo": {
+      "properties": {
+        "description": {
+          "default": "",
+          "title": "Description",
+          "type": "string"
+        },
+        "people": {
+          "items": {
+            "type": "string"
+          },
+          "title": "People",
+          "type": "array"
+        },
+        "roles": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Roles",
+          "type": "array"
+        }
+      },
+      "title": "RoleInfo",
+      "type": "object"
+    },
+    "SlackAliasInfo": {
+      "properties": {
+        "alias": {
+          "default": "",
+          "title": "Alias",
+          "type": "string"
+        },
+        "description": {
+          "default": "",
+          "title": "Description",
+          "type": "string"
+        }
+      },
+      "title": "SlackAliasInfo",
+      "type": "object"
+    },
+    "SlackChannelInfo": {
+      "properties": {
+        "channel": {
+          "default": "",
+          "title": "Channel",
+          "type": "string"
+        },
+        "channel_id": {
+          "default": "",
+          "title": "Channel Id",
+          "type": "string"
+        },
+        "description": {
+          "default": "",
+          "title": "Description",
+          "type": "string"
+        },
+        "types": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Types",
+          "type": "array"
+        }
+      },
+      "title": "SlackChannelInfo",
+      "type": "object"
+    },
+    "SlackConfigInfo": {
+      "properties": {
+        "aliases": {
+          "items": {
+            "$ref": "#/$defs/SlackAliasInfo"
+          },
+          "title": "Aliases",
+          "type": "array"
+        },
+        "channels": {
+          "items": {
+            "$ref": "#/$defs/SlackChannelInfo"
+          },
+          "title": "Channels",
+          "type": "array"
+        }
+      },
+      "title": "SlackConfigInfo",
+      "type": "object"
+    },
+    "SlackIdMappings": {
+      "properties": {
+        "slack_uid_to_uid": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Slack Uid To Uid",
+          "type": "object"
+        }
+      },
+      "title": "SlackIdMappings",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "indexes": {
+      "$ref": "#/$defs/Indexes"
+    },
+    "lookups": {
+      "$ref": "#/$defs/Lookups"
+    },
+    "metadata": {
+      "$ref": "#/$defs/Metadata"
+    }
+  },
+  "title": "ComprehensiveIndexModel",
+  "type": "object"
+}
