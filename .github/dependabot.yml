@@ -11,10 +11,10 @@ updates:
     groups:
       github-actions:
         patterns: ["*"]
-    # Let a release settle before proposing it; wait longer for majors.
+    # Let a release settle before proposing it. (semver-*-days is not supported
+    # for the github-actions ecosystem, so a single default is used.)
     cooldown:
       default-days: 7
-      semver-major-days: 30
 
   # Watch the runtime/dev dependency bounds (notably the pydantic floor).
   - package-ecosystem: pip
@@ -28,4 +28,3 @@ updates:
         patterns: ["*"]
     cooldown:
       default-days: 7
-      semver-major-days: 30
