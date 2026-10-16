@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+import scripts.schema_compat as sc
 from scripts.schema_compat import ADDITIVE, BREAKING, NONE, check, diff_schemas
 
 
@@ -257,3 +258,60 @@ def test_field_becoming_optional_is_additive() -> None:
     base = {"Foo": model({"a": {"type": "string"}}, required=["a"])}
     cur = {"Foo": model({"a": {"type": "string"}})}
     assert severity_of(base, cur) == ADDITIVE
+
+
+# ---- const (single-value Literal) and enum<->object kind changes ----
+
+
+def test_single_value_const_change_is_breaking() -> None:
+    # Literal['team'] renders as {"const": "team"}; changing the value is breaking.
+    base = {"Foo": model({"kind": {"const": "team", "type": "string"}})}
+    cur = {"Foo": model({"kind": {"const": "org", "type": "string"}})}
+    assert severity_of(base, cur) == BREAKING
+
+
+def test_def_kind_change_enum_to_object_is_breaking() -> None:
+    base = {"Color": {"type": "string", "enum": ["r", "g"]}}
+    cur = {"Color": model({"a": {"type": "string"}})}  # no longer an enum
+    assert severity_of(base, cur) == BREAKING
+
+
+def test_tightened_constraint_on_enum_field_is_breaking() -> None:
+    # Membership unchanged, but a new constraint must still be detected.
+    base = {"Foo": model({"c": {"type": "string", "enum": ["x", "y"]}})}
+    cur = {"Foo": model({"c": {"type": "string", "enum": ["x", "y"], "maxLength": 3}})}
+    assert severity_of(base, cur) == BREAKING
+
+
+# ---- robustness of helpers ----
+
+
+def test_pick_baseline_ignores_non_major_files(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(sc, "BASELINE_DIR", tmp_path)
+    (tmp_path / "v0.json").write_text("{}")
+    (tmp_path / "v2.json").write_text("{}")
+    (tmp_path / "v.json").write_text("{}")  # stray — must be ignored, not crash
+    (tmp_path / "version.json").write_text("{}")  # stray
+    assert sc._pick_baseline() == tmp_path / "v2.json"
+
+
+def test_pick_baseline_errors_when_empty(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(sc, "BASELINE_DIR", tmp_path)
+    with pytest.raises(SystemExit):
+        sc._pick_baseline()
+
+
+def test_schema_version_missing_default_raises_cleanly() -> None:
+    metadata = {"properties": {"schema_version": {"type": "string"}}, "required": ["schema_version"]}
+    with pytest.raises(SystemExit):
+        sc._schema_version({"$defs": {"Metadata": metadata}})
+
+
+def test_write_baseline_single_sources_serialization(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(sc, "BASELINE_DIR", tmp_path)
+    assert sc._write_baseline() == 0
+    from orgindex_schema import SCHEMA_VERSION
+
+    written = tmp_path / f"v{SCHEMA_VERSION.split('.')[0]}.json"
+    assert written.exists()
+    assert "Metadata" in json.loads(written.read_text())["$defs"]

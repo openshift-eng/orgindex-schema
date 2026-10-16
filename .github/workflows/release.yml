@@ -29,25 +29,38 @@ jobs:
       # Never publish a red tree: run the full gate (incl. the breaking-change gate).
       - run: make all
 
-      # Enforce the coupling rule: package MAJOR must equal SCHEMA_VERSION's major.
-      - name: Verify version coupling
-        run: |
-          TAG="${GITHUB_REF_NAME#v}"
-          PKG_MAJOR="${TAG%%.*}"
-          SCHEMA_MAJOR="$(uv run python -c 'from orgindex_schema import SCHEMA_VERSION; print(SCHEMA_VERSION.split(".")[0])')"
-          echo "tag=${TAG} package-major=${PKG_MAJOR} schema-major=${SCHEMA_MAJOR}"
-          if [ "${PKG_MAJOR}" != "${SCHEMA_MAJOR}" ]; then
-            echo "::error::package major (${PKG_MAJOR}) != SCHEMA_VERSION major (${SCHEMA_MAJOR}); see COMPATIBILITY.md"
-            exit 1
-          fi
-
-      - name: Classify (pre-release vs final)
+      # Parse the tag with PEP 440 semantics (not shell globs): enforce the
+      # version-coupling rule and classify pre-release vs final reliably.
+      - name: Verify version & classify
         id: classify
+        env:
+          TAG_NAME: ${{ github.ref_name }}
         run: |
-          case "${GITHUB_REF_NAME}" in
-            *rc*|*a*|*b*|*.dev*) echo "prerelease=true" >> "$GITHUB_OUTPUT" ;;
-            *) echo "prerelease=false" >> "$GITHUB_OUTPUT" ;;
-          esac
+          uv run --with packaging python - <<'PY'
+          import os, sys
+          from packaging.version import Version, InvalidVersion
+          from orgindex_schema import SCHEMA_VERSION
+
+          raw = os.environ["TAG_NAME"].removeprefix("v")
+          try:
+              pkg = Version(raw)
+          except InvalidVersion as exc:
+              sys.exit(f"::error::tag '{raw}' is not a valid PEP 440 version: {exc}")
+          schema = Version(SCHEMA_VERSION)
+
+          # Coupling: package and contract share the compatibility prefix — the
+          # major always, and (while 0.x) the minor too, since consumers pin on it.
+          mismatch = pkg.major != schema.major or (pkg.major == 0 and pkg.minor != schema.minor)
+          if mismatch:
+              sys.exit(
+                  f"::error::package {pkg} and SCHEMA_VERSION {schema} must share the "
+                  f"compatibility prefix (major; also minor while 0.x) — see COMPATIBILITY.md"
+              )
+
+          with open(os.environ["GITHUB_OUTPUT"], "a") as out:
+              out.write(f"prerelease={'true' if pkg.is_prerelease else 'false'}\n")
+          print(f"tag={pkg} schema={schema} prerelease={pkg.is_prerelease}")
+          PY
 
       - run: uv build
 

@@ -23,9 +23,11 @@ compat-check:
 	$(RUN) $(PYTHON) scripts/schema_compat.py
 
 # Refresh the released baseline for the current SCHEMA_VERSION major. Run this as
-# part of cutting a release, then commit schema/baselines/v<major>.json.
+# part of cutting a release, then commit schema/baselines/v<major>.json. Do NOT run
+# it in the same change as a schema edit, or compat-check compares the change
+# against itself (see RELEASING.md).
 baseline:
-	$(RUN) $(PYTHON) -c "import json, pathlib; from orgindex_schema import SCHEMA_VERSION; from orgindex_schema.schema import generate_json_schema; major = SCHEMA_VERSION.split('.')[0]; p = pathlib.Path('schema/baselines') / f'v{major}.json'; p.parent.mkdir(parents=True, exist_ok=True); p.write_text(json.dumps(generate_json_schema(), indent=2, sort_keys=True) + '\n'); print(f'wrote {p}')"
+	$(RUN) $(PYTHON) scripts/schema_compat.py --write-baseline
 
 # Tools are invoked as `python -m <tool>` so they work without the console scripts
 # being on PATH (e.g. in the Prow test image).

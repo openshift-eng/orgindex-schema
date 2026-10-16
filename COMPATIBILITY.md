@@ -2,14 +2,15 @@
 
 `orgindex-schema` carries two version numbers with different jobs:
 
-- **`SCHEMA_VERSION`** (`orgindex_schema.version`, currently `1.0.0`): the version
+- **`SCHEMA_VERSION`** (`orgindex_schema.version`, currently `0.1.0`): the version
   of the on-disk index *contract*. The producer embeds it in
   `metadata.schema_version`; consumers check it at load time. This document
   governs this number.
 - **Package version** (derived from the git tag by `hatch-vcs`, exposed as
   `orgindex_schema.__version__`): the Python distribution version on PyPI. It is
   bumped for any release, including doc-only ones. Its **major is coupled** to
-  `SCHEMA_VERSION`'s major (see below); its minor/patch move independently.
+  `SCHEMA_VERSION`'s major (see below); its minor/patch move independently once
+  stable, but **while `0.x` the minor is also coupled** (consumers pin on it).
 
 ## Package version ↔ SCHEMA_VERSION coupling
 
@@ -30,8 +31,11 @@ check (below) is then defense-in-depth, not the only guard. The release workflow
 enforces the coupling: a tag whose major disagrees with `SCHEMA_VERSION`'s major
 fails to publish.
 
-Within a major, minor/patch of the package and of `SCHEMA_VERSION` need not match:
-a packaging- or docs-only fix bumps the package patch while `SCHEMA_VERSION` holds.
+Once stable (`>= 1.0`), within a major the minor/patch of the package and of
+`SCHEMA_VERSION` need not match: a packaging- or docs-only fix bumps the package
+patch while `SCHEMA_VERSION` holds. While `0.x`, the **minor** is the compatibility
+segment, so the package and `SCHEMA_VERSION` minor must agree (the release workflow
+enforces the full prefix — major always, minor while `0.x`).
 
 ### Initial development (0.x)
 
@@ -89,8 +93,14 @@ check in the Go and Python clients follows.
 2. Bump `SCHEMA_VERSION` in `src/orgindex_schema/version.py` per the rules above.
 3. Run `make schema` to regenerate `index.schema.json` and commit it; the
    `make schema-check` CI gate fails on drift.
-4. A MAJOR bump is a deliberate, human-reviewed decision. Coordinate the rollout
-   across the producer and every consumer before merging.
+4. Run `make compat-check` to confirm the bump matches the detected change class;
+   CI runs it too and blocks a mismatch. Do **not** run `make baseline` here — the
+   baseline is refreshed only when cutting a release (see `RELEASING.md`), or the
+   gate would compare the change against itself.
+5. Add a `CHANGELOG.md` entry under `Unreleased`.
+6. A breaking bump (MAJOR when stable, MINOR while `0.x`) is a deliberate,
+   human-reviewed decision. Coordinate the rollout across the producer and every
+   consumer before merging.
 
 ## Automated breaking-change gate
 

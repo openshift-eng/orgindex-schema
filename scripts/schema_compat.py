@@ -74,13 +74,21 @@ def _defs(schema: dict[str, Any]) -> dict[str, dict[str, Any]]:
 
 
 def _enum(node: dict[str, Any]) -> set[Any] | None:
-    """Return the enum value set of a node, or ``None`` if it is not an enum.
+    """Return the allowed-value set of a node, or ``None`` if it is unconstrained.
 
-    Looks through ``anyOf``/``oneOf``/``allOf`` so a nullable/union enum
+    Covers ``enum`` (``Literal[...]`` with >1 value) and ``const`` (a single-value
+    ``Literal``, which pydantic emits as ``{"const": ...}``). Looks through
+    ``anyOf``/``oneOf``/``allOf`` so a nullable/union enum
     (e.g. ``Optional[SomeEnum]`` -> ``anyOf: [{enum: ...}, {type: null}]``) is
-    still recognized. Works on both a property node and an enum ``$def``."""
+    still recognized. Works on both a property node and an enum ``$def``.
+
+    Limitation: for a union of *several* inline enums it returns the first found,
+    so a value removed from a later branch of such a union is not compared. This
+    is a rare construct (multi-type inline enum union) for this contract."""
     if "enum" in node:
         return set(node["enum"])
+    if "const" in node:
+        return {node["const"]}
     for key in ("anyOf", "oneOf", "allOf"):
         for sub in node.get(key, []):
             found = _enum(sub)
@@ -125,12 +133,12 @@ def _compare_prop(where: str, old: dict[str, Any], new: dict[str, Any]) -> Chang
     if old_enum is not None and new_enum is not None and _type_sig(old) == _type_sig(new):
         removed, added = old_enum - new_enum, new_enum - old_enum
         if removed:
-            return Change(BREAKING, f"{where}: enum value(s) removed: {sorted(map(str, removed))}")
+            return Change(BREAKING, f"{where}: allowed value(s) removed: {sorted(map(str, removed))}")
         if added:
-            return Change(ADDITIVE, f"{where}: enum value(s) added: {sorted(map(str, added))}")
-        return None
-
-    if _type_sig(old) != _type_sig(new):
+            return Change(ADDITIVE, f"{where}: allowed value(s) added: {sorted(map(str, added))}")
+        # Membership unchanged: fall through to the constraint check below rather
+        # than returning early (a tightened constraint on an enum field still counts).
+    elif _type_sig(old) != _type_sig(new):
         return Change(BREAKING, f"{where}: type changed ({_type_sig(old)} -> {_type_sig(new)})")
 
     old_c, new_c = _constraints(old), _constraints(new)
@@ -167,7 +175,9 @@ def diff_schemas(baseline: dict[str, Any], current: dict[str, Any]) -> list[Chan
 
         # A standalone enum renders as its own $def (enum list, no properties).
         base_enum, cur_enum = _enum(base_def), _enum(cur_def)
-        if base_enum is not None and cur_enum is not None:
+        if (base_enum is None) != (cur_enum is None):
+            changes.append(Change(BREAKING, f"{name}: definition changed to/from an enum"))
+        elif base_enum is not None and cur_enum is not None:
             removed, added = base_enum - cur_enum, cur_enum - base_enum
             if removed:
                 changes.append(Change(BREAKING, f"{name}: enum value(s) removed: {sorted(map(str, removed))}"))
@@ -206,7 +216,14 @@ def diff_schemas(baseline: dict[str, Any], current: dict[str, Any]) -> list[Chan
 
 def _schema_version(schema: dict[str, Any]) -> str:
     """The contract version a schema encodes (Metadata.schema_version's default)."""
-    return str(_defs(schema)["Metadata"]["properties"]["schema_version"]["default"])
+    try:
+        return str(_defs(schema)["Metadata"]["properties"]["schema_version"]["default"])
+    except (KeyError, TypeError) as exc:
+        raise SystemExit(
+            "cannot read the contract version: Metadata.schema_version has no default "
+            "(did it become required, or was Metadata renamed/removed?). "
+            "SCHEMA_VERSION must remain a defaulted field."
+        ) from exc
 
 
 def _parse_semver(version: str) -> tuple[int, int, int]:
@@ -219,10 +236,11 @@ def _parse_semver(version: str) -> tuple[int, int, int]:
 
 
 def _pick_baseline() -> Path:
-    candidates = list(BASELINE_DIR.glob("v*.json"))
+    # Baselines are named v<major>.json; ignore anything whose stem isn't exactly that.
+    candidates = [(int(stem), p) for p in BASELINE_DIR.glob("v*.json") if (stem := p.stem.removeprefix("v")).isdigit()]
     if not candidates:
-        raise SystemExit(f"no baselines found in {BASELINE_DIR}")
-    return max(candidates, key=lambda p: int(p.stem.lstrip("v")))
+        raise SystemExit(f"no v<major>.json baselines found in {BASELINE_DIR}")
+    return max(candidates)[1]
 
 
 def check(baseline_path: Path, current: dict[str, Any]) -> int:
@@ -290,6 +308,19 @@ def check(baseline_path: Path, current: dict[str, Any]) -> int:
     return 0
 
 
+def _write_baseline() -> int:
+    """Write the current schema to schema/baselines/v<major>.json (release step)."""
+    from orgindex_schema import SCHEMA_VERSION
+    from orgindex_schema.schema import dumps_canonical, generate_json_schema
+
+    major = SCHEMA_VERSION.split(".")[0]
+    path = BASELINE_DIR / f"v{major}.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(dumps_canonical(generate_json_schema()) + "\n")
+    print(f"wrote {path}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -298,7 +329,15 @@ def main(argv: list[str] | None = None) -> int:
         default=None,
         help="baseline schema to compare against (default: highest-major file in schema/baselines/)",
     )
+    parser.add_argument(
+        "--write-baseline",
+        action="store_true",
+        help="write the current schema to schema/baselines/v<major>.json and exit (release step)",
+    )
     args = parser.parse_args(argv)
+
+    if args.write_baseline:
+        return _write_baseline()
 
     # Import lazily so --help works without the package installed.
     from orgindex_schema.schema import generate_json_schema
