@@ -38,6 +38,11 @@ Issues = "https://github.com/openshift-eng/orgindex-schema/issues"
 [tool.hatch.version]
 source = "vcs"
 
+# Don't hard-fail a build in a checkout without tags (e.g. a CI image built from a
+# shallow clone); real releases always build from a tag, which takes precedence.
+[tool.hatch.version.raw-options]
+fallback_version = "0.0.0"
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/orgindex_schema"]
 
