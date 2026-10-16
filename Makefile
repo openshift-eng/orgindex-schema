@@ -27,19 +27,21 @@ compat-check:
 baseline:
 	$(RUN) $(PYTHON) -c "import json, pathlib; from orgindex_schema import SCHEMA_VERSION; from orgindex_schema.schema import generate_json_schema; major = SCHEMA_VERSION.split('.')[0]; p = pathlib.Path('schema/baselines') / f'v{major}.json'; p.parent.mkdir(parents=True, exist_ok=True); p.write_text(json.dumps(generate_json_schema(), indent=2, sort_keys=True) + '\n'); print(f'wrote {p}')"
 
+# Tools are invoked as `python -m <tool>` so they work without the console scripts
+# being on PATH (e.g. in the Prow test image).
 test:
-	$(RUN) pytest
+	$(RUN) $(PYTHON) -m pytest
 
 lint:
-	$(RUN) ruff check .
+	$(RUN) $(PYTHON) -m ruff check .
 
 format:
-	$(RUN) ruff format .
+	$(RUN) $(PYTHON) -m ruff format .
 
 format-check:
-	$(RUN) ruff format --check .
+	$(RUN) $(PYTHON) -m ruff format --check .
 
 typecheck:
-	$(RUN) mypy
+	$(RUN) $(PYTHON) -m mypy
 
 all: lint format-check typecheck test schema-check compat-check
