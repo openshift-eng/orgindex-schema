@@ -6,8 +6,9 @@ not conform to the contract and must not ship.
 
 Two classes of problem are detected:
 
-1. **Type / structure violations** via pydantic *strict* validation (no coercion),
-   e.g. a string where a list is expected, or ``total_orgs`` emitted as a string.
+1. **Type / structure violations** via pydantic validation (non-strict, matching
+   how consumers read the index), e.g. a string where a list is expected or a null
+   where a value is required. Coercible drift a consumer would tolerate is not flagged.
 2. **Unmodeled / extra fields** present in the data but absent from the contract.
    The models read tolerantly (``extra="ignore"``) so they would silently drop
    these; the gate surfaces them instead. This also catches a swallowed builder
