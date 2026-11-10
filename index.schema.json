@@ -26,6 +26,16 @@
           "default": null,
           "title": "Description"
         },
+        "file_path": {
+          "default": "",
+          "title": "File Path",
+          "type": "string"
+        },
+        "git_url": {
+          "default": "",
+          "title": "Git Url",
+          "type": "string"
+        },
         "name": {
           "default": "",
           "title": "Name",
@@ -514,6 +524,16 @@
           "title": "Description",
           "type": "string"
         },
+        "file_path": {
+          "default": "",
+          "title": "File Path",
+          "type": "string"
+        },
+        "git_url": {
+          "default": "",
+          "title": "Git Url",
+          "type": "string"
+        },
         "group": {
           "anyOf": [
             {
@@ -768,7 +788,7 @@
           "type": "boolean"
         },
         "schema_version": {
-          "default": "0.1.0",
+          "default": "0.1.1",
           "title": "Schema Version",
           "type": "string"
         },
