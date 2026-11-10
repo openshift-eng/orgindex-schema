@@ -172,6 +172,8 @@ class HierarchyEntity(BaseModel):
 
     name: str = ""
     description: str = ""
+    git_url: str = ""  # URL of the entity's source file (present when it has one)
+    file_path: str = ""  # repo-relative path of the entity's source file
     parent: ParentRef | None = None
     parent_id: str = ""  # present only with an identity map
     stable_id: str = ""  # present only with an identity map
@@ -200,6 +202,8 @@ class ComponentEntry(BaseModel):
 
     name: str = ""
     description: str | None = None
+    git_url: str = ""  # URL of the component's source file (present when it has one)
+    file_path: str = ""  # repo-relative path of the component's source file
     parent: ParentRef | None = None
     repos_list: list[str] = Field(default_factory=list)
     component: ComponentInner | None = None

@@ -11,6 +11,9 @@ contract note the `SCHEMA_VERSION` transition and, for a major, link a migration
 ## [Unreleased]
 
 ### Added
+- `git_url` and `file_path` on `HierarchyEntity` (groups) and `ComponentEntry`
+  (components): the URL and repo-relative path of each entity's source file.
+  Additive, optional/defaulted change — `SCHEMA_VERSION` `0.1.0` → `0.1.1`.
 - Release engineering: tag-driven publishing to PyPI via Trusted Publishing (OIDC),
   with build-provenance attestations; TestPyPI dry runs for pre-release tags.
 - Automated **breaking-change gate** (`scripts/schema_compat.py`, `make compat-check`)

@@ -17,4 +17,4 @@ and an additive change bumps the PATCH. There is no stability promise until
 
 from typing import Final
 
-SCHEMA_VERSION: Final = "0.1.0"
+SCHEMA_VERSION: Final = "0.1.1"
